@@ -1,4 +1,4 @@
-//////////////////////////////////////////////////////////////////////////////
+﻿//////////////////////////////////////////////////////////////////////////////
 //
 //  Copyright 2023 Autodesk, Inc.  All rights reserved.
 //
@@ -47,11 +47,21 @@
 #include "ArxDbgCmdTests.h"
 #include "ArxDbgUiTdmReactors.h"
 
-
+#include "dbsymutl.h"
 
 extern void cmdAboutBox();
 extern void mapTestExportDwg();
 extern void mapTestImportDwg();
+
+//二开代码开始
+void testHw()
+{
+    acutPrintf(_T("\nhello world"));
+    acdbSymUtil()->blockModelSpaceId(acdbHostApplicationServices()->workingDatabase());
+    //AcDbSymbolUtilities::getBlockId(AcDbObjectId(), _T(""), NULL);
+}
+
+//
 
 
 AC_IMPLEMENT_EXTENSION_MODULE(ArxDbgDll);
@@ -608,6 +618,9 @@ ArxDbgApp::registerCommands()
 		// GIS Map tests for ADE
 	cmdStack->addCommand(m_appName, _T("ArxDbgMapTestExport"), _T("MapTestExport"), ACRX_CMD_MODAL, &mapTestExportDwg);
     cmdStack->addCommand(m_appName, _T("ArxDbgMapTestImport"), _T("MapTestImport"), ACRX_CMD_MODAL, &mapTestImportDwg);
+
+#define register_cmd(cmd) acedRegCmds->addCommand(m_appName, L#cmd, L#cmd, ACRX_CMD_MODAL, cmd)
+    register_cmd(testHw);
 }
 
 /**************************************************************************
