@@ -94,6 +94,39 @@ void testHw()
 
 	connor.setXdata(obj);
 
+    ///
+
+	AcDbDictionary* extDict = ArxDbgUtils::openExtDictForWrite(obj, true);
+    if (extDict)
+    {
+        auto prKey = _T("A_Circle");
+        if (extDict->has(prKey))
+        {
+            acutPrintf(_T("\n\"%s\" is already in the extension dictionary."),
+                static_cast<LPCTSTR>(prKey));
+        }
+        else
+        {
+            // make an Xrecord to stick into the dictionary
+            AcDbXrecord* xRec = new AcDbXrecord;
+            resbuf* rb = acutBuildList(2, static_cast<LPCTSTR>(_T("CircleValue")), 0);
+            xRec->setFromRbChain(*rb);
+
+            AcDbObjectId newObjId;
+            es = extDict->setAt(static_cast<LPCTSTR>(prKey), xRec, newObjId);
+            if (es != Acad::eOk)
+            {
+                ArxDbgUtils::rxErrorMsg(es);
+                delete xRec;
+            }
+            else
+            {
+                acutPrintf(_T("\nAdded it to the dictionary!"));
+                xRec->close();
+            }
+        }
+        extDict->close();
+    }
     obj->close();
 }
 
