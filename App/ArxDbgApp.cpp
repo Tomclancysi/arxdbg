@@ -53,12 +53,48 @@ extern void cmdAboutBox();
 extern void mapTestExportDwg();
 extern void mapTestImportDwg();
 
+#include "ArxDbgUtils.h"
+
 //二开代码开始
+
 void testHw()
 {
-    acutPrintf(_T("\nhello world"));
-    acdbSymUtil()->blockModelSpaceId(acdbHostApplicationServices()->workingDatabase());
-    //AcDbSymbolUtilities::getBlockId(AcDbObjectId(), _T(""), NULL);
+#define XDT_AGE                 20000
+#define XDT_RANK                20001
+#define XDT_BIRTHDAY            20002
+#define XDT_FAVORITE_ANIMALS    20003
+#define XDT_MISC                20004
+#define XDT_HANDLE              20005
+	AcDbObjectId objId;
+	AcDbObject* obj;
+
+	if (!ArxDbgUtils::selectEntityOrObject(objId))
+		return;
+
+	Acad::ErrorStatus es = acdbOpenAcDbObject(obj, objId, AcDb::kForWrite);
+	if (es != Acad::eOk)
+	{
+		ArxDbgUtils::rxErrorMsg(es);
+		return;
+	}
+
+	// add xdata for first app
+	ArxDbgAppXdata connor(_T("CONNOR"), obj->database());
+	connor.setDistance(XDT_AGE, 6.0);
+	connor.setInteger(XDT_RANK, 1);
+	connor.setString(XDT_BIRTHDAY, _T("January 14, 1993"));
+    connor.setHandle(XDT_HANDLE, AcDbHandle(_T("1F")));
+
+	// add in a uniform list
+	ArxDbgXdataList list1;
+	list1.appendString(_T("Tiger"));
+	list1.appendString(_T("Lion"));
+	list1.appendString(_T("Wolf"));
+	connor.setList(XDT_FAVORITE_ANIMALS, list1);
+
+	connor.setXdata(obj);
+
+    obj->close();
 }
 
 //

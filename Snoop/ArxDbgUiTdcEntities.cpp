@@ -59,6 +59,7 @@ ArxDbgUiTdcEntities::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, ARXDBG_LC_DATA, m_dataList);
     DDX_Control(pDX, ARXDBG_TREE_ENTS, m_entTree);
     //}}AFX_DATA_MAP
+    DDX_Control(pDX, ARXDBG_FR_BLKPREVIEW, m_BlkPreview);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -110,6 +111,52 @@ ArxDbgUiTdcEntities::OnInitDialog()
     displayCurrent(0);
 
     return TRUE;
+}
+
+void ArxDbgUiTdcEntities::OnPaint()
+{
+	CPaintDC dc(this); // device context for painting
+
+    AcDbObject* pObj = NULL;
+    Acad::ErrorStatus es = acdbOpenObject(pObj, m_currentObjId, AcDb::kForRead, true);	// might want to show erased
+    AcDbBlockReference* pBlkRef = AcDbBlockReference::cast(pObj);
+    if (pBlkRef)
+    {
+        auto btrId = pBlkRef->blockTableRecord();
+        AcDbBlockTableRecord* pBtr = NULL;
+        acdbOpenObject(pBtr, btrId, AcDb::kForRead, true);	// might want to show erased
+        if (pBtr)
+        {
+
+        }
+
+        m_BlkPreview.EnableWindow(TRUE);
+		/*const TCHAR* fname;
+		AcDbDatabase* pDb;
+		Acad::ErrorStatus es = pDb->getFilename(fname);
+		if (es == Acad::eOk)
+		{
+			m_BlkPreview.EnableWindow(TRUE);
+			if (!acdbDisplayPreviewFromDwg(fname, m_BlkPreview.m_hWnd))
+				ArxDbgUtils::stopAlertBox(_T("ERROR: Could not display preview image!"));
+		}*/
+    }
+    else
+    {
+        m_BlkPreview.EnableWindow(FALSE);
+    }
+    pObj->close();
+
+	/*if (es == Acad::eOk)
+	{
+		m_frPreview.EnableWindow(TRUE);
+		if (!acdbDisplayPreviewFromDwg(fname, m_frPreview.m_hWnd))
+			ArxDbgUtils::stopAlertBox(_T("ERROR: Could not display preview image!"));
+	}
+	else
+	{
+		m_frPreview.EnableWindow(FALSE);
+	}*/
 }
 
 /****************************************************************************

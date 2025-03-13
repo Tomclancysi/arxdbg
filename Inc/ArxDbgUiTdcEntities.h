@@ -46,6 +46,7 @@ protected:
     // Generated message map functions
     //{{AFX_MSG(ArxDbgUiTdcEntities)
     virtual BOOL OnInitDialog();
+    afx_msg void OnPaint();
     afx_msg void OnSelchangedEnts(NMHDR* pNMHDR, LRESULT* pResult);
     //}}AFX_MSG
     DECLARE_MESSAGE_MAP()
@@ -65,6 +66,7 @@ private:
 
     void        displayCurrent(int index);
 
+    CStatic m_BlkPreview;
 };
 
 

@@ -1,15 +1,6 @@
-//////////////////////////////////////////////////////////////////////////////
-//
-//  Copyright 2023 Autodesk, Inc.  All rights reserved.
-//
-//  Use of this software is subject to the terms of the Autodesk license 
-//  agreement provided at the time of installation or download, or which 
-//  otherwise accompanies this software in either electronic or hard copy form.   
-//
-//////////////////////////////////////////////////////////////////////////////
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
-// Used by ArxDbg.rc
+// Microsoft Visual C++ 生成的包含文件。
+// 供 ArxDbg.rc 使用
 //
 #define ARXDBG_PIC_FULL_PALETTE_TOP     114
 #define ARXDBG_PIC_FULL_PALETTE_BOTTOM  115
@@ -335,6 +326,7 @@
 #define ARXDBG_BN_REFERENCED_OBJS       1352
 #define ARXDBG_TXT_OBJTYPE              1355
 #define ARXDBG_CB_SHOW_ERASED_REFS      1356
+#define ARXDBG_FR_BLKPREVIEW            1357
 #define ARXDBG_DLG_GENERIC_DEF_ID       11086
 #define ARXDBG_TDM_TRANSDB_CLONES       11087
 #define ARXDBG_LC_DEF_IDS               11162
@@ -385,9 +377,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        199
+#define _APS_NEXT_RESOURCE_VALUE        200
 #define _APS_NEXT_COMMAND_VALUE         32810
-#define _APS_NEXT_CONTROL_VALUE         1357
+#define _APS_NEXT_CONTROL_VALUE         1358
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
