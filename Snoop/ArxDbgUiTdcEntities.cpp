@@ -1,4 +1,4 @@
-//////////////////////////////////////////////////////////////////////////////
+﻿//////////////////////////////////////////////////////////////////////////////
 //
 //  Copyright 2023 Autodesk, Inc.  All rights reserved.
 //
@@ -9,6 +9,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //
 #include "StdAfx.h"
+#include "atlimage.h"
 
 #if defined(_DEBUG) && !defined(AC_FULL_DEBUG)
 #error _DEBUG should not be defined except in internal Adesk debug builds
@@ -67,6 +68,7 @@ ArxDbgUiTdcEntities::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(ArxDbgUiTdcEntities, ArxDbgUiTdcDbObjectBase)
     //{{AFX_MSG_MAP(ArxDbgUiTdcEntities)
+    ON_WM_PAINT()
     ON_NOTIFY(TVN_SELCHANGED, ARXDBG_TREE_ENTS, OnSelchangedEnts)
     ON_BN_CLICKED(ARXDBG_BN_DATABASE, OnDatabase)
     //}}AFX_MSG_MAP
@@ -117,35 +119,94 @@ void ArxDbgUiTdcEntities::OnPaint()
 {
 	CPaintDC dc(this); // device context for painting
 
-    AcDbObject* pObj = NULL;
-    Acad::ErrorStatus es = acdbOpenObject(pObj, m_currentObjId, AcDb::kForRead, true);	// might want to show erased
-    AcDbBlockReference* pBlkRef = AcDbBlockReference::cast(pObj);
-    if (pBlkRef)
+    bool enabled = true;
+    AcArray<Adesk::UInt8> icon;
+    do 
     {
-        auto btrId = pBlkRef->blockTableRecord();
-        AcDbBlockTableRecord* pBtr = NULL;
-        acdbOpenObject(pBtr, btrId, AcDb::kForRead, true);	// might want to show erased
-        if (pBtr)
+		AcDbObject* pObj = NULL;
+		Acad::ErrorStatus es = acdbOpenObject(pObj, m_currentObjId, AcDb::kForRead, true);	// might want to show erased
+        if (es != eOk || !pObj)
         {
-
+            enabled = false;
+            break;
+        }
+        AcDbBlockReference* pBlkRef = AcDbBlockReference::cast(pObj);
+        if (!pBlkRef)
+        {
+            enabled = false;
+            pObj->close();
+            break;
+        }
+        AcDbObjectId btrId = pBlkRef->blockTableRecord();
+        pObj->close();
+        
+        AcDbBlockTableRecord* pBtr = NULL;
+        es = acdbOpenObject(pBtr, btrId, AcDb::kForRead, true);	// might want to show erased
+        if (es != eOk || !pBtr)
+        {
+			enabled = false;
+			break;
         }
 
-        m_BlkPreview.EnableWindow(TRUE);
-		/*const TCHAR* fname;
-		AcDbDatabase* pDb;
-		Acad::ErrorStatus es = pDb->getFilename(fname);
-		if (es == Acad::eOk)
-		{
-			m_BlkPreview.EnableWindow(TRUE);
-			if (!acdbDisplayPreviewFromDwg(fname, m_BlkPreview.m_hWnd))
-				ArxDbgUtils::stopAlertBox(_T("ERROR: Could not display preview image!"));
-		}*/
-    }
-    else
+        if (!pBtr->hasPreviewIcon())
+        {
+            enabled = false;
+            pBtr->close();
+            break;
+        }
+
+        es = pBtr->getPreviewIcon(icon);
+        pBtr->close();
+        if (icon.isEmpty())
+        {
+            enabled = false;
+        }
+
+    } while (false);
+
+    m_BlkPreview.EnableWindow(enabled);
+    if (enabled)
     {
-        m_BlkPreview.EnableWindow(FALSE);
+		//BITMAPINFOHEADER ih;
+		//memcpy(&ih, icon.asArrayPtr(), sizeof(ih));
+		//size_t memsize = sizeof(BITMAPINFOHEADER) + ((1 << ih.biBitCount) * sizeof(RGBQUAD));
+		//LPBITMAPINFO bi = (LPBITMAPINFO)malloc(memsize);
+		//memcpy(bi, icon.asArrayPtr(), memsize);
+		//HBITMAP hbm = CreateDIBitmap(dc.GetSafeHdc(), &ih, CBM_INIT, icon.asArrayPtr() + memsize, bi, DIB_RGB_COLORS);
+		//free(bi);
+		const BITMAPINFOHEADER* pBmih = reinterpret_cast<const BITMAPINFOHEADER*>(icon.asArrayPtr());
+		
+		// -----------------------------------------------------------
+		// 步骤 2：构造 BITMAPINFO（包含颜色表）
+		// -----------------------------------------------------------
+		const BYTE* pColorTable = icon.asArrayPtr() + pBmih->biSize;
+		BITMAPINFO* pBmi = (BITMAPINFO*)pBmih;
+
+		// -----------------------------------------------------------
+		// 步骤 3：获取像素数据指针
+		// -----------------------------------------------------------
+		const BYTE* pPixelData = icon.asArrayPtr() + pBmih->biSize + (pBmih->biClrUsed * sizeof(RGBQUAD));
+
+		// -----------------------------------------------------------
+		// 步骤 4：创建 HBITMAP
+		// -----------------------------------------------------------
+		HBITMAP hBitmap = CreateDIBitmap(
+			dc.GetSafeHdc(),          // 设备上下文
+			pBmih,             // BITMAPINFOHEADER
+			CBM_INIT,          // 初始化标志
+			pPixelData,        // 像素数据
+			pBmi,              // BITMAPINFO（含颜色表）
+			DIB_RGB_COLORS     // 颜色表类型
+		);
+
+        HBITMAP hOldBitMap = m_BlkPreview.GetBitmap();
+        if (hOldBitMap)
+        {
+            DeleteObject(hOldBitMap);
+        }
+		m_BlkPreview.SetBitmap(hBitmap);
+		m_BlkPreview.Invalidate();
     }
-    pObj->close();
 
 	/*if (es == Acad::eOk)
 	{

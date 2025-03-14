@@ -42,6 +42,7 @@
     <ClCompile>
       <AdditionalIncludeDirectories>.;.\inc;..\..\..\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <AdditionalDependencies>AcDrawBridge.lib;acgeoment.lib;%(AdditionalDependencies)</AdditionalDependencies>
