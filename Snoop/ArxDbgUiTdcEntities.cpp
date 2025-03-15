@@ -18,6 +18,7 @@
 #include "ArxDbgUiTdcEntities.h"
 #include "ArxDbgUtils.h"
 #include "ArxDbgUtilsGe.h"
+#include "acedCmdNF.h"
 
 
 
@@ -112,6 +113,8 @@ ArxDbgUiTdcEntities::OnInitDialog()
     buildColumns(m_dataList);
     displayCurrent(0);
 
+    m_BlkPreview.SetWindowPos(&CWnd::wndTopMost, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
     return TRUE;
 }
 
@@ -150,9 +153,21 @@ void ArxDbgUiTdcEntities::OnPaint()
 
         if (!pBtr->hasPreviewIcon())
         {
-            enabled = false;
-            pBtr->close();
-            break;
+            const ACHAR* name = _T("*");
+            pBtr->getName(name);
+            struct resbuf* cmdList = acutBuildList(RTSTR, _T("BLOCKICON"), RTSTR, name, 0);
+            int nStatus = 0;
+            if (cmdList)
+            {
+               nStatus = acedCmdS(cmdList);
+               acutRelRb(cmdList);
+            }
+            if (nStatus != RTNORM)
+            {
+                enabled = false;
+                pBtr->close();
+                break;
+            }
         }
 
         es = pBtr->getPreviewIcon(icon);
@@ -206,6 +221,14 @@ void ArxDbgUiTdcEntities::OnPaint()
         }
 		m_BlkPreview.SetBitmap(hBitmap);
 		m_BlkPreview.Invalidate();
+    }
+    else
+    {
+		HBITMAP hOldBitMap = m_BlkPreview.SetBitmap(NULL);;
+		if (hOldBitMap)
+		{
+			DeleteObject(hOldBitMap);
+		}
     }
 
 	/*if (es == Acad::eOk)

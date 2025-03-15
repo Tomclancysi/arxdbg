@@ -13,7 +13,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// è‹±è¯­(ç¾Žå›½) resources
+// Ó¢Óï(ÃÀ¹ú) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
@@ -493,12 +493,12 @@ BEGIN
     COMBOBOX        ARXDBG_PU_MERGESTYLE,280,210,95,85,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
-ARXDBG_TDC_ENTS DIALOGEX 0, 0, 580, 248
+ARXDBG_TDC_ENTS DIALOGEX 0, 0, 409, 240
 STYLE DS_SETFONT | WS_CHILD
 FONT 8, "Microsoft Sans Serif", 0, 0, 0x0
 BEGIN
+    CONTROL         "List1",ARXDBG_LC_DATA,"SysListView32",LVS_REPORT | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,154,10,245,180
     CONTROL         "Tree1",ARXDBG_TREE_ENTS,"SysTreeView32",TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_DISABLEDRAGDROP | TVS_SHOWSELALWAYS | WS_BORDER | WS_HSCROLL | WS_TABSTOP,5,10,145,180
-    CONTROL         "List1",ARXDBG_LC_DATA,"SysListView32",LVS_REPORT | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,155,10,245,180
     PUSHBUTTON      "DXF...",ARXDBG_BN_DXF,10,195,55,14
     PUSHBUTTON      "Xdata...",ARXDBG_BN_XDATA,10,215,55,14
     PUSHBUTTON      "Extension Dict...",ARXDBG_BN_EXTDICT,70,195,55,14
@@ -507,17 +507,17 @@ BEGIN
     PUSHBUTTON      "References...",ARXDBG_BN_REFERENCED_OBJS,130,215,55,14
     PUSHBUTTON      "Database...",ARXDBG_BN_DATABASE,190,195,55,14
     LTEXT           "This entity is currently erased.",ARXDBG_TXT_ERASE_STATUS,275,195,100,8,NOT WS_VISIBLE
-    CONTROL         "",ARXDBG_FR_BLKPREVIEW,"Static",SS_BITMAP,406,12,15,13
+    CONTROL         "",ARXDBG_FR_BLKPREVIEW,"Static",SS_BITMAP,384,192,15,13
 END
 
-ARXDBG_TDM_ENTS DIALOGEX 0, 0, 635, 304
+ARXDBG_TDM_ENTS DIALOGEX 0, 0, 439, 250
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Entities"
 FONT 8, "Microsoft Sans Serif", 0, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,321,275,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,377,275,50,14
-    CONTROL         "Tab1",ARXDBG_TAB_1,"SysTabControl32",0x0,5,5,607,260
+    DEFPUSHBUTTON   "OK",IDOK,315,221,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,370,221,50,14
+    CONTROL         "Tab1",ARXDBG_TAB_1,"SysTabControl32",0x0,5,5,418,210
 END
 
 ARXDBG_TDC_SYS_REACTORS DIALOG 0, 0, 362, 207
@@ -1043,18 +1043,16 @@ BEGIN
 
     ARXDBG_TDC_ENTS, DIALOG
     BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 573
+        LEFTMARGIN, 5
+        RIGHTMARGIN, 402
         TOPMARGIN, 7
-        BOTTOMMARGIN, 241
     END
 
     ARXDBG_TDM_ENTS, DIALOG
     BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 628
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 297
+        RIGHTMARGIN, 423
+        TOPMARGIN, 5
+        BOTTOMMARGIN, 235
     END
 
     ARXDBG_TDC_SYS_REACTORS, DIALOG
@@ -1370,7 +1368,7 @@ BEGIN
     ARXDBG_APPCMD_REGISTRY_INFO "System Registry Information"
 END
 
-#endif    // è‹±è¯­(ç¾Žå›½) resources
+#endif    // Ó¢Óï(ÃÀ¹ú) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -1390,7 +1388,7 @@ END
 LANGUAGE 9, 1
 #pragma code_page(1252)
 #endif
-//#include "..\..\..\incdsksdkversioninfo.rc"
+#include "..\..\..\incdsksdkversioninfo.rc"
 #include "afxres.rc"         // Standard components
 #endif
 /////////////////////////////////////////////////////////////////////////////
