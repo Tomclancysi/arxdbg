@@ -49,6 +49,8 @@
 
 #include "dbsymutl.h"
 
+#include "dbobjptr2.h"
+
 extern void cmdAboutBox();
 extern void mapTestExportDwg();
 extern void mapTestImportDwg();
@@ -131,9 +133,82 @@ void testHw()
 }
 
 //
+void showNormal()
+{
+	AcDbObjectId objId;
 
+	if (!ArxDbgUtils::selectEntityOrObject(objId))
+		return;
+    AcDbObject *obj = nullptr;
+    auto es = acdbOpenObject(obj, objId, AcDb::kForRead);
+    if (es != Acad::eOk)
+    {
+        return;
+    }
+
+    if (obj->isKindOf(AcDbCircle::desc()))
+    {
+        auto norm = AcDbCircle::cast(obj)->normal();
+		acutPrintf(_T("\nNormal is %f, %f, %f"), norm.x, norm.y, norm.z);
+    }
+}
+
+class MyCircle : public AcDbCircle
+{
+public:
+    ACRX_DECLARE_MEMBERS(MyCircle);
+    Acad::ErrorStatus   subTransformBy(const AcGeMatrix3d& xform) override
+    {
+        acutPrintf(_T("\nInfo:"));
+        AcGePoint3d origin;
+        AcGeVector3d xDir, yDir, zDir;
+        xform.getCoordSystem(origin, xDir, yDir, zDir);
+
+        acutPrintf(_T("\nOrigin: %f, %f, %f"), origin.x, origin.y, origin.z);
+        acutPrintf(_T("\nXDir: %f, %f, %f"), xDir.x, xDir.y, xDir.z);
+        acutPrintf(_T("\nYDir: %f, %f, %f"), yDir.x, yDir.y, yDir.z);
+        acutPrintf(_T("\nZDir: %f, %f, %f"), zDir.x, zDir.y, zDir.z);
+
+        return AcDbCircle::subTransformBy(xform);
+    }
+
+};
+
+ACRX_DXF_DEFINE_MEMBERS(MyCircle, AcDbCircle,
+	AcDb::kDHL_CURRENT, AcDb::kMReleaseCurrent,
+	AcDbProxyEntity::kTransformAllowed |
+	AcDbProxyEntity::kColorChangeAllowed |
+	AcDbProxyEntity::kLayerChangeAllowed,
+    MyCircle, Product: ZRX Enabler | Company : ZWSOFT | Website : www.zwcad.com
+);
 
 AC_IMPLEMENT_EXTENSION_MODULE(ArxDbgDll);
+
+void addMyCircle()
+{
+    auto pDb = acdbHostApplicationServices()->workingDatabase();
+    auto msId = acdbSymUtil()->blockModelSpaceId(pDb);
+    AcDbBlockTableRecord *pMs = nullptr;
+    auto es = acdbOpenObject(pMs, msId, AcDb::kForWrite);
+    if (es != Acad::eOk || nullptr == pMs)
+    {
+        return;
+    }
+
+    MyCircle* pCir = new MyCircle;
+    pCir->setCenter(AcGePoint3d(0, 0, 0));
+    pCir->setRadius(50);
+
+    es = pMs->appendAcDbEntity(pCir);
+    pCir->close();
+    pMs->close();
+
+    if (es != Acad::eOk)
+    {
+        delete pCir;
+    }
+}
+
 
 ArxDbgApp*    ThisApp = NULL;
 
@@ -690,6 +765,11 @@ ArxDbgApp::registerCommands()
 
 #define register_cmd(cmd) acedRegCmds->addCommand(m_appName, L#cmd, L#cmd, ACRX_CMD_MODAL, cmd)
     register_cmd(testHw);
+    register_cmd(showNormal);
+    register_cmd(addMyCircle);
+
+    MyCircle::rxInit();
+    acrxBuildClassHierarchy();
 }
 
 /**************************************************************************
@@ -714,6 +794,8 @@ ArxDbgApp::unRegisterCommands()
 	m_cmdClasses.setLogicalLength(0);
 
     acedRegCmds->removeGroup(m_appName);    // remove any registered commands
+
+    deleteAcRxClass(MyCircle::desc());
 }
 
 /**************************************************************************
