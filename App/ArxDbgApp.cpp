@@ -48,8 +48,8 @@
 #include "ArxDbgUiTdmReactors.h"
 
 #include "dbsymutl.h"
-
 #include "dbobjptr2.h"
+#include <chrono>
 
 extern void cmdAboutBox();
 extern void mapTestExportDwg();
@@ -132,25 +132,37 @@ void testHw()
     obj->close();
 }
 
-//
-void showNormal()
+void testInsertSpeed()
 {
-	AcDbObjectId objId;
+    AcDbDatabase* pDb = acdbHostApplicationServices()->workingDatabase();
+    AcDbObjectId blkId;
+    AcString blkNameTemplate(_T("tempBlk%d"));
+    AcString blkName;
+    TCHAR kszFileName[] = _T("C:\\Users\\lining\\Desktop\\Drawing1.dwg");
+    for (size_t i = 0; i < 10000; i++)
+    {
+        blkName.format(blkNameTemplate.kTCharPtr(), i);
+        if (!AcDbSymbolUtilities::hasBlock(blkName.kTCharPtr(), pDb))
+        {
+            break;
+        }
+    }
 
-	if (!ArxDbgUtils::selectEntityOrObject(objId))
-		return;
-    AcDbObject *obj = nullptr;
-    auto es = acdbOpenObject(obj, objId, AcDb::kForRead);
-    if (es != Acad::eOk)
+    AcDbDatabase* pInsertDb = new AcDbDatabase;
+    if (pInsertDb->readDwgFile(kszFileName))
     {
         return;
     }
-
-    if (obj->isKindOf(AcDbCircle::desc()))
+    
+    std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+    if (pDb->insert(blkId, blkName.kTCharPtr(), pInsertDb))
     {
-        auto norm = AcDbCircle::cast(obj)->normal();
-		acutPrintf(_T("\nNormal is %f, %f, %f"), norm.x, norm.y, norm.z);
+        return;
     }
+    std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+    int milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+
+    acutPrintf(_T("\nMake Block Time: %d"), milliseconds);
 }
 
 class MyCircle : public AcDbCircle
@@ -432,7 +444,7 @@ ArxDbgApp::initApp()
     _tmakepath(path, drive, dir, NULL, NULL);
     m_appPath = path;
 
-	CWnd* splashScreen = startSplashScreen();
+	//CWnd* splashScreen = startSplashScreen();
 
     registerClasses();
     registerCommands();
@@ -446,7 +458,7 @@ ArxDbgApp::initApp()
 	registerDialogExtensions();
 	registerAppMenu();
 
-	endSplashScreen(splashScreen);
+	//endSplashScreen(splashScreen); // Splash开启软件时的提示信息
 
     m_didInit = true;
     return AcRx::kRetOK;
@@ -765,7 +777,7 @@ ArxDbgApp::registerCommands()
 
 #define register_cmd(cmd) acedRegCmds->addCommand(m_appName, L#cmd, L#cmd, ACRX_CMD_MODAL, cmd)
     register_cmd(testHw);
-    register_cmd(showNormal);
+    register_cmd(testInsertSpeed);
     register_cmd(addMyCircle);
 
     MyCircle::rxInit();

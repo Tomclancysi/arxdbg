@@ -109,6 +109,7 @@ ArxDbgUiTdcRxObjectBase::buildColumns(CListCtrl& dataList)
 void
 ArxDbgUiTdcRxObjectBase::drawPropsList(CListCtrl& dataList)
 {
+    // 为了避免在绘制时出现闪烁，先锁定窗口，然后删除所有项，最后再添加新的项。同时提高了效率。
 	this->LockWindowUpdate();		// suppress redraw events
 
     dataList.DeleteAllItems();		// remove any existing items from the control

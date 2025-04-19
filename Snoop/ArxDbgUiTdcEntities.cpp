@@ -182,19 +182,12 @@ void ArxDbgUiTdcEntities::OnPaint()
     m_BlkPreview.EnableWindow(enabled);
     if (enabled)
     {
-		//BITMAPINFOHEADER ih;
-		//memcpy(&ih, icon.asArrayPtr(), sizeof(ih));
-		//size_t memsize = sizeof(BITMAPINFOHEADER) + ((1 << ih.biBitCount) * sizeof(RGBQUAD));
-		//LPBITMAPINFO bi = (LPBITMAPINFO)malloc(memsize);
-		//memcpy(bi, icon.asArrayPtr(), memsize);
-		//HBITMAP hbm = CreateDIBitmap(dc.GetSafeHdc(), &ih, CBM_INIT, icon.asArrayPtr() + memsize, bi, DIB_RGB_COLORS);
-		//free(bi);
+        // 取header
 		const BITMAPINFOHEADER* pBmih = reinterpret_cast<const BITMAPINFOHEADER*>(icon.asArrayPtr());
 		
 		// -----------------------------------------------------------
 		// 步骤 2：构造 BITMAPINFO（包含颜色表）
 		// -----------------------------------------------------------
-		const BYTE* pColorTable = icon.asArrayPtr() + pBmih->biSize;
 		BITMAPINFO* pBmi = (BITMAPINFO*)pBmih;
 
 		// -----------------------------------------------------------
@@ -231,16 +224,6 @@ void ArxDbgUiTdcEntities::OnPaint()
 		}
     }
 
-	/*if (es == Acad::eOk)
-	{
-		m_frPreview.EnableWindow(TRUE);
-		if (!acdbDisplayPreviewFromDwg(fname, m_frPreview.m_hWnd))
-			ArxDbgUtils::stopAlertBox(_T("ERROR: Could not display preview image!"));
-	}
-	else
-	{
-		m_frPreview.EnableWindow(FALSE);
-	}*/
 }
 
 /****************************************************************************
