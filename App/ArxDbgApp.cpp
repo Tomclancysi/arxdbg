@@ -49,6 +49,7 @@
 
 #include "dbsymutl.h"
 #include "dbobjptr2.h"
+#include "EntMakeTest.h"
 #include <chrono>
 
 extern void cmdAboutBox();
@@ -132,13 +133,22 @@ void testHw()
     obj->close();
 }
 
+
+
 void testInsertSpeed()
 {
     AcDbDatabase* pDb = acdbHostApplicationServices()->workingDatabase();
     AcDbObjectId blkId;
     AcString blkNameTemplate(_T("tempBlk%d"));
     AcString blkName;
-    TCHAR kszFileName[] = _T("C:\\Users\\lining\\Desktop\\Drawing1.dwg");
+    resbuf rb;
+    int nRet = acedGetFileD(_T("选择插入的图纸"), NULL, _T("dwg"), 0, &rb);
+    if (nRet != RTNORM || rb.restype != RTSTR)
+    {
+        return;
+    }
+
+    auto kszFileName = rb.resval.rstring;
     for (size_t i = 0; i < 10000; i++)
     {
         blkName.format(blkNameTemplate.kTCharPtr(), i);
@@ -163,6 +173,53 @@ void testInsertSpeed()
     int milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
 
     acutPrintf(_T("\nMake Block Time: %d"), milliseconds);
+
+	AcDbBlockReference* blkRef = new AcDbBlockReference;
+
+	// set this block to point at the correct block ref
+	Acad::ErrorStatus es = blkRef->setBlockTableRecord(blkId);
+	if (es != Acad::eOk)
+	{
+		delete blkRef;
+		ArxDbgUtils::rxErrorAlert(es);
+		return;
+	}
+
+	ads_point adsPt; //用于存储用户输入的点
+    AcGePoint3d insertPt(0, 0, 0);
+	int res = acedGetPoint(NULL, _T("\n选择一个插入点: "), adsPt);
+    if (res == RTNORM)
+    {
+        insertPt.set(adsPt[0], adsPt[1], adsPt[2]);
+    }
+
+	blkRef->setPosition(insertPt);
+    {
+	    AcDbBlockTableRecord* blkDef = NULL;
+	    acdbOpenObject(blkDef, blkId, AcDb::kForRead);
+
+	    AcDbExtents extents;
+        if (extents.addBlockExt(blkDef) == Acad::eOk)
+        {
+			AcGePoint3d minPt = extents.minPoint();
+            insertPt.set(insertPt.x - minPt.x, insertPt.y - minPt.y, insertPt.z - minPt.z);
+			blkRef->setPosition(insertPt);
+        }
+        if (blkDef)
+        {
+	        blkDef->close();
+        }
+    }
+	blkRef->setRotation(0.);
+	blkRef->setScaleFactors(1.);
+
+	if (ArxDbgUtils::addToCurrentSpace(blkRef) == Acad::eOk)
+	{
+        EntMakeDbox::makeAttributes(blkId, blkRef);
+		ArxDbgUtils::transformToWcs(blkRef, acdbHostApplicationServices()->workingDatabase());
+		blkRef->close();
+	}
+
 }
 
 class MyCircle : public AcDbCircle

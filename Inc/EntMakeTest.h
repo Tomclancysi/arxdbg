@@ -26,7 +26,7 @@ class EntMakeDbox : public CAcUiDialog {
 
 public:
                 EntMakeDbox(CWnd* pParent);
-
+                static Acad::ErrorStatus   makeAttributes(const AcDbObjectId& blockRecordId, AcDbBlockReference* blkRef);
     //{{AFX_DATA(EntMakeDbox)
     enum { IDD = ARXDBG_DLG_ENTMAKE };
     //}}AFX_DATA
@@ -39,6 +39,7 @@ public:
 
     virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra,
                     AFX_CMDHANDLERINFO* pHandlerInfo);
+
 
 protected:
     // Generated message map functions
@@ -97,7 +98,6 @@ private:
     void                addPolygonMeshVertex(AcDbPolygonMesh* mesh, const AcGePoint3d& pt);
     void                nextNvertex(int nSize, const AcGePoint3d& pt1, const AcGePoint3d& pt2, AcDbPolygonMesh* mesh);
     AcGePoint3d         nextMvertex(int mSize, int loop, const AcGePoint3d& pt1, const AcGePoint3d& pt2);
-    Acad::ErrorStatus   makeAttributes(const AcDbObjectId& blockRecordId, AcDbBlockReference* blkRef);
     Acad::ErrorStatus   getBlockSpecFromUser(AcDbObjectId& blockId, AcGePoint3d& insertPt,
                                 double& scale, double& rotation);
 
