@@ -46,6 +46,8 @@
 #include "ArxDbgCmdReactors.h"
 #include "ArxDbgCmdTests.h"
 #include "ArxDbgUiTdmReactors.h"
+#include "ArxDbgSelSet.h"
+#include "ArxDbgUtils.h"
 
 #include "dbsymutl.h"
 #include "dbobjptr2.h"
@@ -55,8 +57,6 @@
 extern void cmdAboutBox();
 extern void mapTestExportDwg();
 extern void mapTestImportDwg();
-
-#include "ArxDbgUtils.h"
 
 //二开代码开始
 
@@ -277,6 +277,75 @@ void addMyCircle()
         delete pCir;
     }
 }
+
+void addToBlock()
+{
+	ArxDbgSelSet ss;
+	if (ss.userSelect(_T("\nselect objs append to block"), NULL, NULL) != ArxDbgSelSet::kSelected)
+		return;
+    AcDbObjectIdArray objIds;
+    ss.asArray(objIds);
+    
+    AcDbEntity* pEnt = ArxDbgUtils::selectEntity(_T("\nselect a block reference:"), AcDb::kForRead);
+    AcDbBlockReference* pTmpBref = AcDbBlockReference::cast(pEnt);
+    if (!pTmpBref)
+    {
+        return;
+    }
+    AcDbSmartObjectPointer<AcDbBlockReference> pBref;
+    pBref.acquire(pTmpBref);
+
+    AcDbObjectId btrId = pBref->blockTableRecord();
+    auto insPt = pBref->position();
+    auto xformVec = -(insPt - AcGePoint3d::kOrigin);
+    AcGeMatrix3d xform;
+    xform.setTranslation(xformVec);
+
+    AcDbSmartObjectPointer<AcDbBlockTableRecord> pBtr(btrId, AcDb::kForRead);
+    if (pBtr.openStatus() != Acad::eOk)
+    {
+        return;
+    }
+
+    AcDbObjectIdArray refIds;
+    pBtr->getBlockReferenceIds(refIds);
+    pBtr.close();
+    if (refIds.logicalLength() == 1 && refIds[0] == pEnt->objectId())
+    {
+        // just use curr btr
+        auto pDb = acdbHostApplicationServices()->workingDatabase();
+        AcDbIdMapping idmap;
+        auto es = pDb->deepCloneObjects(objIds, btrId, idmap);
+        for (auto objId : objIds)
+        {
+            AcDbIdPair idPair(objId, AcDbObjectId::kNull, true, true);
+            idmap.compute(idPair);
+            if (idPair.value().isNull())
+            {
+                continue;
+            }
+            AcDbSmartObjectPointer<AcDbEntity> pNewEnt(idPair.value(), kForWrite);
+            if (pNewEnt.openStatus() == eOk)
+            {
+                pNewEnt->transformBy(xform);
+            }
+        }
+		// erase original objects
+        for (auto objId : objIds)
+		{
+			AcDbSmartObjectPointer<AcDbEntity> pTmpEnt(objId, AcDb::kForWrite);
+            pTmpEnt->erase();
+		}
+        auto brefId = pBref->objectId();
+        acdbQueueForRegen((AcDbObjectId*)&brefId, 1);
+        acutPrintf(_T("\nres = %d"), es);
+    }
+    else
+    {
+        // new a btr, and add objects
+    }
+}
+
 
 
 ArxDbgApp*    ThisApp = NULL;
@@ -836,6 +905,7 @@ ArxDbgApp::registerCommands()
     register_cmd(testHw);
     register_cmd(testInsertSpeed);
     register_cmd(addMyCircle);
+    register_cmd(addToBlock);
 
     MyCircle::rxInit();
     acrxBuildClassHierarchy();
