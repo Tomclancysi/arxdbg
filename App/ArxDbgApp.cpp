@@ -286,36 +286,44 @@ void addToBlock()
     AcDbObjectIdArray objIds;
     ss.asArray(objIds);
     
-    AcDbEntity* pEnt = ArxDbgUtils::selectEntity(_T("\nselect a block reference:"), AcDb::kForRead);
-    AcDbBlockReference* pTmpBref = AcDbBlockReference::cast(pEnt);
-    if (!pTmpBref)
+    AcDbEntity* pEnt = ArxDbgUtils::selectEntity(_T("\nselect a block reference:"), AcDb::kForWrite);
+    if (!pEnt)
     {
         return;
     }
-    AcDbSmartObjectPointer<AcDbBlockReference> pBref;
-    pBref.acquire(pTmpBref);
+    AcDbBlockReference* pTmpBref = AcDbBlockReference::cast(pEnt);
+    if (!pTmpBref)
+    {
+        pEnt->close();
+        return;
+    }
+    // 选择的块参照由智能指针关闭
+    AcDbSmartObjectPointer<AcDbBlockReference> pOldBlkRefPointer;
+    pOldBlkRefPointer.acquire(pTmpBref);
 
-    AcDbObjectId btrId = pBref->blockTableRecord();
-    auto insPt = pBref->position();
+    auto insPt = pOldBlkRefPointer->position();
     auto xformVec = -(insPt - AcGePoint3d::kOrigin);
     AcGeMatrix3d xform;
     xform.setTranslation(xformVec);
 
-    AcDbSmartObjectPointer<AcDbBlockTableRecord> pBtr(btrId, AcDb::kForRead);
-    if (pBtr.openStatus() != Acad::eOk)
-    {
-        return;
-    }
+	AcDbObjectIdArray refIds;
+    AcDbObjectId oldBtrId = pOldBlkRefPointer->blockTableRecord();
+	{
+        // 打开获取块的引用个数
+		AcDbSmartObjectPointer<AcDbBlockTableRecord> pBtr(oldBtrId, AcDb::kForRead);
+		if (pBtr.openStatus() != Acad::eOk)
+		{
+			return;
+		}
+		pBtr->getBlockReferenceIds(refIds);
+	}
 
-    AcDbObjectIdArray refIds;
-    pBtr->getBlockReferenceIds(refIds);
-    pBtr.close();
-    if (refIds.logicalLength() == 1 && refIds[0] == pEnt->objectId())
+    if (refIds.logicalLength() == 1)
     {
-        // just use curr btr
+        // 块定义更新
         auto pDb = acdbHostApplicationServices()->workingDatabase();
         AcDbIdMapping idmap;
-        auto es = pDb->deepCloneObjects(objIds, btrId, idmap);
+        auto es = pDb->deepCloneObjects(objIds, oldBtrId, idmap);
         for (auto objId : objIds)
         {
             AcDbIdPair idPair(objId, AcDbObjectId::kNull, true, true);
@@ -336,13 +344,45 @@ void addToBlock()
 			AcDbSmartObjectPointer<AcDbEntity> pTmpEnt(objId, AcDb::kForWrite);
             pTmpEnt->erase();
 		}
-        auto brefId = pBref->objectId();
-        acdbQueueForRegen((AcDbObjectId*)&brefId, 1);
+
+        // 添加新的块参照，删除老的
+        pOldBlkRefPointer->erase();
+
+        // 添加到模型空间
+        AcDbBlockReference* pNewBlkRef = new AcDbBlockReference;
+		AcDbBlockTableRecord* pBlkMs;
+		es = ArxDbgUtils::openBlockDef(ACDB_MODEL_SPACE, pBlkMs, AcDb::kForWrite, pDb);
+        if (es != eOk)
+        {
+            return;
+        }
+        es = pBlkMs->appendAcDbEntity(pNewBlkRef);
+        if (es != eOk)
+        {
+            delete pNewBlkRef;
+        }
+        else
+        {
+            pNewBlkRef->setBlockTableRecord(oldBtrId);
+            pNewBlkRef->setPosition(insPt);
+            pNewBlkRef->close();
+        }
+        pBlkMs->close();
+
+        //auto brefId = pBlkRefPointer->objectId();
+        //acdbQueueForRegen((AcDbObjectId*)&brefId, 1);
         acutPrintf(_T("\nres = %d"), es);
     }
     else
     {
-        // new a btr, and add objects
+        // 需要新的块定义
+		auto pDb = acdbHostApplicationServices()->workingDatabase();
+        
+		AcDbIdMapping idmap;
+        AcDbObjectIdArray blkRecArr;
+        blkRecArr.append(oldBtrId);
+		auto es = pDb->deepCloneObjects(blkRecArr, pDb->blockTableId(), idmap);
+        acutPrintf(_T("\nres = %d"), es);
     }
 }
 
